@@ -1,179 +1,157 @@
 <!DOCTYPE html>
 <html lang="he">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>משחק הצפרדע</title>
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="manifest.json">
     <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker
-          .register('service-worker.js')
-          .then((registration) =>
-            console.log('Service Worker registered:', registration)
-          )
-          .catch((error) =>
-            console.log('Service Worker registration failed:', error)
-          );
-      }
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                .then(registration => console.log('Service Worker registered:', registration))
+                .catch(error => console.log('Service Worker registration failed:', error));
+            });
+        }
     </script>
     <style>
-      body {
-        text-align: center;
-        font-family: Arial, sans-serif;
-      }
-      canvas {
-        border: 2px solid black;
-        background-color: lightblue;
-      }
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid black;
+            background-color: lightblue;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <h1>משחק הצפרדע</h1>
     <canvas id="gameCanvas" width="800" height="400"></canvas>
     <p>לחץ על מקש הרווח או גע במסך כדי לקפוץ</p>
     <script>
-      const canvas = document.getElementById('gameCanvas');
-      const ctx = canvas.getContext('2d');
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
 
-      const frogImg = new Image();
-      frogImg.src = 'https://i.imgur.com/GraFkHD.png';
-      frogImg.onload = () => console.log('Frog image loaded successfully');
-      frogImg.onerror = () => console.error('Failed to load frog image');
+        const frogImg = new Image();
+        frogImg.src = "https://i.imgur.com/GraFkHD.png";
 
-      const obstacleImg = new Image();
-      obstacleImg.src =
-        'https://media.tenor.com/5ILHj9ow1CcAAAAj/fire-poop-poop.gif';
-      obstacleImg.onload = () =>
-        console.log('Obstacle image loaded successfully');
-      obstacleImg.onerror = () =>
-        console.error('Failed to load obstacle image');
+        const obstacleImg = new Image();
+        obstacleImg.src = "https://media.tenor.com/5ILHj9ow1CcAAAAj/fire-poop-poop.gif";
 
-      const jumpSound = new Audio(
-        'https://www.soundjay.com/button/beep-07.wav'
-      );
-      const gameOverSound = new Audio(
-        'https://www.soundjay.com/button/beep-10.wav'
-      );
+        const jumpSound = new Audio("https://www.soundjay.com/button/beep-07.wav");
+        const gameOverSound = new Audio("https://www.soundjay.com/button/beep-10.wav");
 
-      const frog = {
-        x: 50,
-        y: 300,
-        width: 40,
-        height: 40,
-        dy: 0,
-        gravity: 0.5,
-        jumpPower: -10,
-        isJumping: false,
-      };
-
-      let obstacles = [];
-      let score = 0;
-      let gameOver = false;
-
-      function drawFrog() {
-        ctx.drawImage(frogImg, frog.x, frog.y, frog.width, frog.height);
-      }
-
-      function drawObstacles() {
-        obstacles.forEach((obstacle) => {
-          ctx.drawImage(
-            obstacleImg,
-            obstacle.x,
-            obstacle.y,
-            obstacle.width,
-            obstacle.height
-          );
-        });
-      }
-
-      function updateFrog() {
-        frog.y += frog.dy;
-        frog.dy += frog.gravity;
-        if (frog.y >= 300) {
-          frog.y = 300;
-          frog.isJumping = false;
-        }
-      }
-
-      function createObstacle() {
-        const obstacle = {
-          x: canvas.width,
-          y: 320,
-          width: 40,
-          height: 60,
-          speed: Math.random() * 2 + 3,
+        const frog = {
+            x: 50,
+            y: 300,
+            width: 40,
+            height: 40,
+            dy: 0,
+            gravity: 0.5,
+            jumpPower: -10,
+            isJumping: false,
         };
-        obstacles.push(obstacle);
-      }
 
-      function updateObstacles() {
-        obstacles.forEach((obstacle) => {
-          obstacle.x -= obstacle.speed;
+        let obstacles = [];
+        let score = 0;
+        let gameOver = false;
+
+        function drawFrog() {
+            ctx.drawImage(frogImg, frog.x, frog.y, frog.width, frog.height);
+        }
+
+        function drawObstacles() {
+            obstacles.forEach(obstacle => {
+                ctx.drawImage(obstacleImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+        }
+
+        function updateFrog() {
+            frog.y += frog.dy;
+            frog.dy += frog.gravity;
+            if (frog.y >= 300) {
+                frog.y = 300;
+                frog.isJumping = false;
+            }
+        }
+
+        function createObstacle() {
+            const obstacle = {
+                x: canvas.width,
+                y: 320,
+                width: 40,
+                height: 60,
+                speed: Math.random() * 2 + 3
+            };
+            obstacles.push(obstacle);
+        }
+
+        function updateObstacles() {
+            obstacles.forEach(obstacle => {
+                obstacle.x -= obstacle.speed;
+            });
+            if (obstacles.length > 0 && obstacles[0].x < -40) {
+                obstacles.shift();
+                score++;
+            }
+        }
+
+        function checkCollision() {
+            obstacles.forEach(obstacle => {
+                if (frog.x < obstacle.x + obstacle.width &&
+                    frog.x + frog.width > obstacle.x &&
+                    frog.y < obstacle.y + obstacle.height &&
+                    frog.y + frog.height > obstacle.y) {
+                    gameOverSound.play();
+                    gameOver = true;
+                }
+            });
+        }
+
+        function drawScore() {
+            ctx.fillStyle = "black";
+            ctx.font = "20px Arial";
+            ctx.fillText("ניקוד: " + score, 10, 20);
+        }
+
+        function gameLoop() {
+            if (gameOver) {
+                ctx.fillStyle = "red";
+                ctx.font = "30px Arial";
+                ctx.fillText("המשחק נגמר!", canvas.width / 2 - 80, canvas.height / 2);
+                return;
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateFrog();
+            updateObstacles();
+            checkCollision();
+            drawFrog();
+            drawObstacles();
+            drawScore();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function jump() {
+            if (!frog.isJumping) {
+                frog.dy = frog.jumpPower;
+                frog.isJumping = true;
+                jumpSound.play();
+            }
+        }
+
+        document.addEventListener("keydown", function(event) {
+            if (event.code === "Space") {
+                jump();
+            }
         });
-        if (obstacles.length > 0 && obstacles[0].x < -40) {
-          obstacles.shift();
-          score++;
-        }
-      }
 
-      function checkCollision() {
-        obstacles.forEach((obstacle) => {
-          if (
-            frog.x < obstacle.x + obstacle.width &&
-            frog.x + frog.width > obstacle.x &&
-            frog.y < obstacle.y + obstacle.height &&
-            frog.y + frog.height > obstacle.y
-          ) {
-            gameOverSound.play();
-            gameOver = true;
-          }
+        document.addEventListener("touchstart", function() {
+            jump();
         });
-      }
 
-      function drawScore() {
-        ctx.fillStyle = 'black';
-        ctx.font = '20px Arial';
-        ctx.fillText('ניקוד: ' + score, 10, 20);
-      }
-
-      function gameLoop() {
-        if (gameOver) {
-          ctx.fillStyle = 'red';
-          ctx.font = '30px Arial';
-          ctx.fillText('המשחק נגמר!', canvas.width / 2 - 80, canvas.height / 2);
-          return;
-        }
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        updateFrog();
-        updateObstacles();
-        checkCollision();
-        drawFrog();
-        drawObstacles();
-        drawScore();
-        requestAnimationFrame(gameLoop);
-      }
-
-      function jump() {
-        if (!frog.isJumping) {
-          frog.dy = frog.jumpPower;
-          frog.isJumping = true;
-          jumpSound.play();
-        }
-      }
-
-      document.addEventListener('keydown', function (event) {
-        if (event.code === 'Space') {
-          jump();
-        }
-      });
-
-      document.addEventListener('touchstart', function () {
-        jump();
-      });
-
-      setInterval(createObstacle, 2000);
-      gameLoop();
+        setInterval(createObstacle, 2000);
+        gameLoop();
     </script>
-  </body>
+</body>
 </html>
